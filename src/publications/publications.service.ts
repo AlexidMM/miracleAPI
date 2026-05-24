@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Publication } from './entities/publication.entity';
 import { CreatePublicationDto } from './dto/create-publication.dto';
 import { UpdatePublicationDto } from './dto/update-publication.dto';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class PublicationsService {
@@ -13,20 +14,37 @@ export class PublicationsService {
   ) {}
 
   async create(createPublicationDto: CreatePublicationDto) {
-    const publication = this.publicationsRepository.create(createPublicationDto);
+    const { authorId, ...publicationData } = createPublicationDto;
+    const publication = this.publicationsRepository.create({
+      ...publicationData,
+      author: { id: authorId } as User,
+    });
     return await this.publicationsRepository.save(publication);
   }
 
   async findAll() {
-    return await this.publicationsRepository.find();
+    return await this.publicationsRepository.find({ relations: ['author'] });
   }
 
   async findOne(id: number) {
-    return await this.publicationsRepository.findOneBy({ id });
+    const publication = await this.publicationsRepository.findOne({ where: { id }, relations: ['author'] });
+    if (!publication) {
+      throw new NotFoundException(`Publicación con ID ${id} no encontrada`);
+    }
+    return publication;
   }
 
   async update(id: number, updatePublicationDto: UpdatePublicationDto) {
-    await this.publicationsRepository.update(id, updatePublicationDto);
+    const { authorId, ...publicationData } = updatePublicationDto as UpdatePublicationDto & { authorId?: number };
+    await this.publicationsRepository.update(id, {
+      ...publicationData,
+      ...(authorId ? { author: { id: authorId } as User } : {}),
+    });
     return this.findOne(id);
+  }
+
+  async remove(id: number) {
+    const publication = await this.findOne(id);
+    return this.publicationsRepository.remove(publication);
   }
 }

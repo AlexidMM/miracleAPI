@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Question } from './entities/question.entity';
@@ -22,11 +22,20 @@ export class QuestionsService {
   }
 
   async findOne(id: number) {
-    return await this.questionsRepository.findOneBy({ id });
+    const question = await this.questionsRepository.findOneBy({ id });
+    if (!question) {
+      throw new NotFoundException(`Pregunta con ID ${id} no encontrada`);
+    }
+    return question;
   }
 
   async update(id: number, updateQuestionDto: UpdateQuestionDto) {
     await this.questionsRepository.update(id, updateQuestionDto);
     return await this.findOne(id);
+  }
+
+  async remove(id: number) {
+    const question = await this.findOne(id);
+    return this.questionsRepository.remove(question);
   }
 }

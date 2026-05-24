@@ -3,23 +3,23 @@ import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeor
 @Entity('questions')
 export class Question {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ type: 'text' })
-  body: string;
+  body!: string;
 
   @Column({ type: 'text', nullable: true })
-  answer: string;
+  answer!: string;
 
   @Column({ name: 'student_id' })
-  studentId: number;
+  studentId!: number;
 
   @Column({ name: 'publication_id' })
-  publicationId: number;
+  publicationId!: number;
 
   @CreateDateColumn({ name: 'asked_at' })
-  askedAt: Date;
+  askedAt!: Date;
 
   @Column({ name: 'answered_at', type: 'timestamptz', nullable: true })
-  answeredAt: Date;
+  answeredAt!: Date;
 }

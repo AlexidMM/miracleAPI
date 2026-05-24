@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Institution } from './entities/institution.entity';
@@ -22,11 +22,20 @@ export class InstitutionsService {
 	}
 
 	async findOne(id: number) {
-		return await this.institutionsRepository.findOneBy({ id });
+			const institution = await this.institutionsRepository.findOneBy({ id });
+			if (!institution) {
+				throw new NotFoundException(`Institución con ID ${id} no encontrada`);
+			}
+			return institution;
 	}
 
 	async update(id: number, updateInstitutionDto: UpdateInstitutionDto) {
 		await this.institutionsRepository.update(id, updateInstitutionDto);
 		return await this.findOne(id);
+	}
+
+	async remove(id: number) {
+		const institution = await this.findOne(id);
+		return this.institutionsRepository.remove(institution);
 	}
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Researcher } from './entities/researcher.entity';
@@ -22,11 +22,20 @@ export class ResearchersService {
   }
 
   async findOne(id: number) {
-    return await this.researchersRepository.findOneBy({ id });
+    const researcher = await this.researchersRepository.findOneBy({ id });
+    if (!researcher) {
+      throw new NotFoundException(`Investigador con ID ${id} no encontrado`);
+    }
+    return researcher;
   }
 
   async update(id: number, updateResearcherDto: UpdateResearcherDto) {
     await this.researchersRepository.update(id, updateResearcherDto);
     return await this.findOne(id);
+  }
+
+  async remove(id: number) {
+    const researcher = await this.findOne(id);
+    return this.researchersRepository.remove(researcher);
   }
 }

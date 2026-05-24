@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Delete } from '@nestjs/common';
 import { ResearchersService } from './researchers.service';
 import { CreateResearcherDto } from './dto/create-researcher.dto';
 import { UpdateResearcherDto } from './dto/update-researcher.dto';
@@ -25,5 +25,10 @@ export class ResearchersController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateResearcherDto: UpdateResearcherDto) {
     return this.researchersService.update(+id, updateResearcherDto);
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.researchersService.remove(+id);
   }
 }

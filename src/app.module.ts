@@ -6,12 +6,12 @@ import { InstitutionsModule } from './institutions/institutions.module';
 import { StudentsModule } from './students/students.module';
 import { ResearchersModule } from './researchers/researchers.module';
 import { QuestionsModule } from './questions/questions.module';
-import * as dotenv from 'dotenv';
-
-dotenv.config(); // Carga el archivo .env antes de que empiece el módulo
+import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -28,6 +28,7 @@ dotenv.config(); // Carga el archivo .env antes de que empiece el módulo
     StudentsModule,
     ResearchersModule,
     QuestionsModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
