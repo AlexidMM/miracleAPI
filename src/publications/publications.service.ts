@@ -1,26 +1,32 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Publication } from './entities/publication.entity';
 import { CreatePublicationDto } from './dto/create-publication.dto';
 import { UpdatePublicationDto } from './dto/update-publication.dto';
 
 @Injectable()
 export class PublicationsService {
-  create(createPublicationDto: CreatePublicationDto) {
-    return 'This action adds a new publication';
+  constructor(
+    @InjectRepository(Publication)
+    private readonly publicationsRepository: Repository<Publication>,
+  ) {}
+
+  async create(createPublicationDto: CreatePublicationDto) {
+    const publication = this.publicationsRepository.create(createPublicationDto);
+    return await this.publicationsRepository.save(publication);
   }
 
-  findAll() {
-    return `This action returns all publications`;
+  async findAll() {
+    return await this.publicationsRepository.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} publication`;
+  async findOne(id: number) {
+    return await this.publicationsRepository.findOneBy({ id });
   }
 
-  update(id: number, updatePublicationDto: UpdatePublicationDto) {
-    return `This action updates a #${id} publication`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} publication`;
+  async update(id: number, updatePublicationDto: UpdatePublicationDto) {
+    await this.publicationsRepository.update(id, updatePublicationDto);
+    return this.findOne(id);
   }
 }

@@ -1,24 +1,24 @@
 import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 
-@Entity('publicaciones')
+@Entity('publications')
 export class Publication {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
-  titulo: string;
+  @Column({ type: 'varchar', length: 255 })
+  title: string;
 
   @Column('text')
-  descripcion: string;
+  description: string;
 
-  @Column()
-  tipo: string;
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  type: string;
 
-  @Column()
-  id_autor_usr: number;
+  @Column({ name: 'author_id' })
+  authorId: number;
 
-  @CreateDateColumn()
-  created_at: Date;
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
 
   @Column({ default: true })
   status: boolean;

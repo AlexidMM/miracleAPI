@@ -2,6 +2,10 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { PublicationsModule } from './publications/publications.module';
+import { InstitutionsModule } from './institutions/institutions.module';
+import { StudentsModule } from './students/students.module';
+import { ResearchersModule } from './researchers/researchers.module';
+import { QuestionsModule } from './questions/questions.module';
 import * as dotenv from 'dotenv';
 
 dotenv.config(); // Carga el archivo .env antes de que empiece el módulo
@@ -20,6 +24,10 @@ dotenv.config(); // Carga el archivo .env antes de que empiece el módulo
     }),
     UsersModule,
     PublicationsModule,
+    InstitutionsModule,
+    StudentsModule,
+    ResearchersModule,
+    QuestionsModule,
   ],
 })
 export class AppModule {}
