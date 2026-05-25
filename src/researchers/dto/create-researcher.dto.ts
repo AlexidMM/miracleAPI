@@ -1,7 +1,9 @@
 export class CreateResearcherDto {
-  firstName: string;
-  lastNameP: string;
+  email!: string;
+  password!: string;
+
+  firstName!: string;
+  lastNameP!: string;
   lastNameM?: string;
   affiliationId?: number;
-  userId?: number;
 }

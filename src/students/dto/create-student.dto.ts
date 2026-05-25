@@ -1,11 +1,11 @@
 export class CreateStudentDto {
-  firstName: string;
+  firstName!: string;
 
-  lastNameP: string;
+  lastNameP!: string;
 
   lastNameM?: string;
 
-  institutionId: number;
+  institutionId!: number;
 
   userId?: number;
 }

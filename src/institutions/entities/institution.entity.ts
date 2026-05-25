@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, OneToMany } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
-import { Student } from '../../students/entities/student.entity';
+import { Student } from '../../users/entities/student.entity';
 import { Researcher } from '../../researchers/entities/researcher.entity';
 
 @Entity('institutions')
@@ -20,7 +20,7 @@ export class Institution {
   @Column({ type: 'varchar', length: 50, nullable: true })
   type!: string;
 
-  @OneToOne(() => User, { onDelete: 'CASCADE' })
+  @OneToOne(() => User, (user) => user.institution, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
 

@@ -1,13 +1,17 @@
-import { Body, Controller, Get, Param, Patch, Post, Delete } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Delete, UseGuards, SetMetadata } from '@nestjs/common';
 import { ResearchersService } from './researchers.service';
 import { CreateResearcherDto } from './dto/create-researcher.dto';
 import { UpdateResearcherDto } from './dto/update-researcher.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../auth/roles.guard';
 
 @Controller('researchers')
 export class ResearchersController {
   constructor(private readonly researchersService: ResearchersService) {}
 
   @Post()
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @SetMetadata('roles', ['admin'])
   create(@Body() createResearcherDto: CreateResearcherDto) {
     return this.researchersService.create(createResearcherDto);
   }
@@ -23,11 +27,14 @@ export class ResearchersController {
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard('jwt'))
   update(@Param('id') id: string, @Body() updateResearcherDto: UpdateResearcherDto) {
     return this.researchersService.update(+id, updateResearcherDto);
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @SetMetadata('roles', ['admin'])
   remove(@Param('id') id: string) {
     return this.researchersService.remove(+id);
   }

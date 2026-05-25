@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Institution } from './entities/institution.entity';
 import { CreateInstitutionDto } from './dto/create-institution.dto';
 import { UpdateInstitutionDto } from './dto/update-institution.dto';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class InstitutionsService {
@@ -13,7 +14,11 @@ export class InstitutionsService {
 	) {}
 
 	async create(createInstitutionDto: CreateInstitutionDto) {
-		const institution = this.institutionsRepository.create(createInstitutionDto);
+		const { userId, ...institutionData } = createInstitutionDto;
+		const institution = this.institutionsRepository.create({
+			...institutionData,
+			...(userId ? { user: { id: userId } as User } : {}),
+		});
 		return await this.institutionsRepository.save(institution);
 	}
 
@@ -30,7 +35,11 @@ export class InstitutionsService {
 	}
 
 	async update(id: number, updateInstitutionDto: UpdateInstitutionDto) {
-		await this.institutionsRepository.update(id, updateInstitutionDto);
+		const { userId, ...institutionData } = updateInstitutionDto as UpdateInstitutionDto & { userId?: number };
+		await this.institutionsRepository.update(id, {
+			...institutionData,
+			...(userId ? { user: { id: userId } as User } : {}),
+		});
 		return await this.findOne(id);
 	}
 

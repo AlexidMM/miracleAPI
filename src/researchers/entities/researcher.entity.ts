@@ -20,7 +20,7 @@ export class Researcher {
   @JoinColumn({ name: 'affiliation_id' })
   affiliation!: Institution;
 
-  @OneToOne(() => User, { onDelete: 'CASCADE' })
+  @OneToOne(() => User, (user) => user.researcher, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
 }
