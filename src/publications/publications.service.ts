@@ -23,11 +23,17 @@ export class PublicationsService {
   }
 
   async findAll() {
-    return await this.publicationsRepository.find({ relations: ['author'] });
+    return await this.publicationsRepository.find({
+      relations: ['author', 'author.researcher', 'author.researcher.affiliation'],
+      order: { id: 'DESC' },
+    });
   }
 
   async findOne(id: number) {
-    const publication = await this.publicationsRepository.findOne({ where: { id }, relations: ['author'] });
+    const publication = await this.publicationsRepository.findOne({
+      where: { id },
+      relations: ['author', 'author.researcher', 'author.researcher.affiliation'],
+    });
     if (!publication) {
       throw new NotFoundException(`Publicación con ID ${id} no encontrada`);
     }
