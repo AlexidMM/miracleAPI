@@ -31,4 +31,14 @@ export class InstitutionsController {
 	remove(@Param('id') id: string) {
 		return this.institutionsService.remove(+id);
 	}
+
+	@Post(':id/disciplines/:disciplineId')
+	addDiscipline(@Param('id') id: string, @Param('disciplineId') disciplineId: string) {
+		return this.institutionsService.addDiscipline(+id, +disciplineId);
+	}
+
+	@Delete(':id/disciplines/:disciplineId')
+	removeDiscipline(@Param('id') id: string, @Param('disciplineId') disciplineId: string) {
+		return this.institutionsService.removeDiscipline(+id, +disciplineId);
+	}
 }

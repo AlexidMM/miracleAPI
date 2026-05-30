@@ -1,6 +1,7 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, JoinColumn, ManyToOne, ManyToMany, JoinTable } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { Institution } from '../../institutions/entities/institution.entity';
+import { Discipline } from '../../disciplines/entities/discipline.entity';
 
 @Entity('researchers')
 export class Researcher {
@@ -23,4 +24,18 @@ export class Researcher {
   @OneToOne(() => User, (user) => user.researcher, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user!: User;
+
+  @ManyToMany(() => Discipline, (discipline) => discipline.researchers)
+  @JoinTable({
+    name: 'researcher_disciplines',
+    joinColumn: {
+      name: 'researcher_id',
+      referencedColumnName: 'id',
+    },
+    inverseJoinColumn: {
+      name: 'discipline_id',
+      referencedColumnName: 'id',
+    },
+  })
+  disciplines!: Discipline[];
 }

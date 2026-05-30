@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { User, UserRole } from '../users/entities/user.entity';
 import { Researcher } from './entities/researcher.entity';
+import { Discipline } from '../disciplines/entities/discipline.entity';
 import { CreateResearcherDto } from './dto/create-researcher.dto';
 import { UpdateResearcherDto } from './dto/update-researcher.dto';
 import * as bcrypt from 'bcrypt';
@@ -12,6 +13,8 @@ export class ResearchersService {
   constructor(
     @InjectRepository(Researcher)
     private readonly researchersRepository: Repository<Researcher>,
+    @InjectRepository(Discipline)
+    private readonly disciplinesRepository: Repository<Discipline>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -59,16 +62,15 @@ export class ResearchersService {
 
   async findAll() {
     return await this.researchersRepository.find({
-      relations: ['user', 'affiliation'],
+      relations: ['user', 'affiliation', 'disciplines'],
     });
   }
 
   async findOne(id: number) {
     const researcher = await this.researchersRepository.findOne({
       where: { id },
-      relations: ['user', 'affiliation'],
+      relations: ['user', 'affiliation', 'disciplines'],
     });
-    
     if (!researcher) {
       throw new NotFoundException(`Investigador con ID ${id} no encontrado`);
     }
@@ -77,8 +79,6 @@ export class ResearchersService {
 
   async update(id: number, updateResearcherDto: UpdateResearcherDto) {
     const researcher = await this.findOne(id);
-    
-    
     const updatedResearcher = this.researchersRepository.merge(researcher, updateResearcherDto);
     return await this.researchersRepository.save(updatedResearcher);
   }
@@ -86,5 +86,49 @@ export class ResearchersService {
   async remove(id: number) {
     const researcher = await this.findOne(id);
     return this.researchersRepository.remove(researcher);
+  }
+
+  async addDiscipline(researcherId: number, disciplineId: number) {
+    const researcher = await this.researchersRepository.findOne({
+      where: { id: researcherId },
+      relations: ['disciplines'],
+    });
+
+    if (!researcher) {
+      throw new NotFoundException(`Investigador con ID ${researcherId} no encontrado`);
+    }
+
+    const discipline = await this.disciplinesRepository.findOne({ where: { id: disciplineId } });
+
+    if (!discipline) {
+      throw new NotFoundException(`Disciplina con ID ${disciplineId} no encontrada`);
+    }
+
+    if (researcher.disciplines.some((d) => d.id === disciplineId)) {
+      throw new BadRequestException('El investigador ya tiene esta disciplina asignada');
+    }
+
+    researcher.disciplines.push(discipline);
+    return await this.researchersRepository.save(researcher);
+  }
+
+  async removeDiscipline(researcherId: number, disciplineId: number) {
+    const researcher = await this.researchersRepository.findOne({
+      where: { id: researcherId },
+      relations: ['disciplines'],
+    });
+
+    if (!researcher) {
+      throw new NotFoundException(`Investigador con ID ${researcherId} no encontrado`);
+    }
+
+    const discipline = await this.disciplinesRepository.findOne({ where: { id: disciplineId } });
+
+    if (!discipline) {
+      throw new NotFoundException(`Disciplina con ID ${disciplineId} no encontrada`);
+    }
+
+    researcher.disciplines = researcher.disciplines.filter((d) => d.id !== disciplineId);
+    return await this.researchersRepository.save(researcher);
   }
 }

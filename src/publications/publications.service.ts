@@ -22,17 +22,26 @@ export class PublicationsService {
     return await this.publicationsRepository.save(publication);
   }
 
-  async findAll() {
-    return await this.publicationsRepository.find({
-      relations: ['author', 'author.researcher', 'author.researcher.affiliation'],
-      order: { id: 'DESC' },
-    });
+  async findAll(disciplineId?: number) {
+    const query = this.publicationsRepository.createQueryBuilder('publication')
+      .leftJoinAndSelect('publication.author', 'author')
+      .leftJoinAndSelect('author.researcher', 'researcher')
+      .leftJoinAndSelect('researcher.affiliation', 'affiliation')
+      .leftJoinAndSelect('researcher.disciplines', 'discipline')
+      .orderBy('publication.id', 'DESC');
+
+    if (disciplineId) {
+      query.andWhere('discipline.id = :disciplineId', { disciplineId });
+      query.distinct(true);
+    }
+
+    return await query.getMany();
   }
 
   async findOne(id: number) {
     const publication = await this.publicationsRepository.findOne({
       where: { id },
-      relations: ['author', 'author.researcher', 'author.researcher.affiliation'],
+      relations: ['author', 'author.researcher', 'author.researcher.affiliation', 'author.researcher.disciplines'],
     });
     if (!publication) {
       throw new NotFoundException(`Publicación con ID ${id} no encontrada`);

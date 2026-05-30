@@ -38,4 +38,16 @@ export class ResearchersController {
   remove(@Param('id') id: string) {
     return this.researchersService.remove(+id);
   }
+
+  @Post(':id/disciplines/:disciplineId')
+  @UseGuards(AuthGuard('jwt'))
+  addDiscipline(@Param('id') id: string, @Param('disciplineId') disciplineId: string) {
+    return this.researchersService.addDiscipline(+id, +disciplineId);
+  }
+
+  @Delete(':id/disciplines/:disciplineId')
+  @UseGuards(AuthGuard('jwt'))
+  removeDiscipline(@Param('id') id: string, @Param('disciplineId') disciplineId: string) {
+    return this.researchersService.removeDiscipline(+id, +disciplineId);
+  }
 }
