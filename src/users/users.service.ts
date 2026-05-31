@@ -23,13 +23,13 @@ export class UsersService {
   }
 
   findAll() {
-    return this.userRepository.find({ relations: ['student', 'researcher', 'institution'] });
+    return this.userRepository.find({ relations: ['student', 'student.institution', 'researcher', 'researcher.affiliation', 'institution'] });
   }
 
   async findOne(id: number) {
     const user = await this.userRepository.findOne({
       where: { id },
-      relations: ['student', 'researcher', 'institution'],
+      relations: ['student', 'student.institution', 'researcher', 'researcher.affiliation', 'institution'],
     });
     if (!user) throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
     return user;
