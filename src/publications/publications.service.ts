@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Publication } from './entities/publication.entity';
@@ -61,5 +61,39 @@ export class PublicationsService {
   async remove(id: number) {
     const publication = await this.findOne(id);
     return this.publicationsRepository.remove(publication);
+  }
+
+  async findByAuthor(authorId: number) {
+    return this.publicationsRepository.find({
+      where: { author: { id: authorId } },
+      relations: ['author'],
+      order: { id: 'DESC' },
+    });
+  }
+
+  async getStatsByAuthor(authorId: number) {
+    const publications = await this.findByAuthor(authorId);
+
+    return {
+      total: publications.length,
+      active: publications.filter((publication) => publication.status).length,
+      closed: publications.filter((publication) => !publication.status).length,
+      byType: {
+        scholarship: publications.filter((publication) => publication.type === 'scholarship').length,
+        internship: publications.filter((publication) => publication.type === 'internship').length,
+        project: publications.filter((publication) => publication.type === 'project').length,
+      },
+    };
+  }
+
+  async updateStatus(id: number, authorId: number, status: boolean) {
+    const publication = await this.findOne(id);
+
+    if (publication.author.id !== authorId) {
+      throw new ForbiddenException('No puedes modificar publicaciones de otro autor');
+    }
+
+    await this.publicationsRepository.update(id, { status });
+    return this.findOne(id);
   }
 }
