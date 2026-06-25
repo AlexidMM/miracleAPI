@@ -5,12 +5,14 @@ import { Publication } from './entities/publication.entity';
 import { CreatePublicationDto } from './dto/create-publication.dto';
 import { UpdatePublicationDto } from './dto/update-publication.dto';
 import { User } from '../users/entities/user.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PublicationsService {
   constructor(
     @InjectRepository(Publication)
     private readonly publicationsRepository: Repository<Publication>,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   async create(createPublicationDto: CreatePublicationDto) {
@@ -19,7 +21,17 @@ export class PublicationsService {
       ...publicationData,
       author: { id: authorId } as User,
     });
-    return await this.publicationsRepository.save(publication);
+    const savedPublication = await this.publicationsRepository.save(publication);
+
+    if (savedPublication.status !== false) {
+      await this.notificationsService.createPublicationStatusNotification(
+        authorId,
+        savedPublication,
+        true,
+      );
+    }
+
+    return savedPublication;
   }
 
   async findAll(disciplineId?: number) {
@@ -50,7 +62,17 @@ export class PublicationsService {
   }
 
   async update(id: number, updatePublicationDto: UpdatePublicationDto) {
+    const publication = await this.findOne(id);
     const { authorId, ...publicationData } = updatePublicationDto as UpdatePublicationDto & { authorId?: number };
+
+    if (publicationData.status !== undefined && publicationData.status !== publication.status) {
+      await this.notificationsService.createPublicationStatusNotification(
+        publication.author.id,
+        publication,
+        publicationData.status,
+      );
+    }
+
     await this.publicationsRepository.update(id, {
       ...publicationData,
       ...(authorId ? { author: { id: authorId } as User } : {}),
@@ -91,6 +113,14 @@ export class PublicationsService {
 
     if (publication.author.id !== authorId) {
       throw new ForbiddenException('No puedes modificar publicaciones de otro autor');
+    }
+
+    if (publication.status !== status) {
+      await this.notificationsService.createPublicationStatusNotification(
+        authorId,
+        publication,
+        status,
+      );
     }
 
     await this.publicationsRepository.update(id, { status });

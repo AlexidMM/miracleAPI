@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS questions CASCADE;
 DROP TABLE IF EXISTS favorites CASCADE;
 DROP TABLE IF EXISTS applications CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS publications CASCADE;
 DROP TABLE IF EXISTS institution_disciplines CASCADE;
 DROP TABLE IF EXISTS researcher_disciplines CASCADE;
@@ -72,4 +73,14 @@ CREATE TABLE publications (
     author_id INTEGER NOT NULL REFERENCES users(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     status BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    publication_id INTEGER REFERENCES publications(id) ON DELETE CASCADE,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('publication_opened', 'publication_closed')),
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

@@ -8,6 +8,7 @@ import { ResearchersModule } from './researchers/researchers.module';
 import { DisciplinesModule } from './disciplines/disciplines.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ConfigModule } from '@nestjs/config';
     ResearchersModule,
     DisciplinesModule,
     AuthModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}
