@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS researchers CASCADE;
 DROP TABLE IF EXISTS students CASCADE;
 DROP TABLE IF EXISTS institutions CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS contacts CASCADE;
 
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -82,5 +83,12 @@ CREATE TABLE notifications (
     type VARCHAR(50) NOT NULL CHECK (type IN ('publication_opened', 'publication_closed')),
     message TEXT NOT NULL,
     is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE contacts (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

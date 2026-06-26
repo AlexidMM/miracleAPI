@@ -9,6 +9,7 @@ import { DisciplinesModule } from './disciplines/disciplines.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ContactsModule } from './contacts/contacts.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { NotificationsModule } from './notifications/notifications.module';
     DisciplinesModule,
     AuthModule,
     NotificationsModule,
+    ContactsModule,
   ],
 })
 export class AppModule {}
