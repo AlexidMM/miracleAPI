@@ -6,7 +6,7 @@ import { Researcher } from './entities/researcher.entity';
 import { Discipline } from '../disciplines/entities/discipline.entity';
 import { CreateResearcherDto } from './dto/create-researcher.dto';
 import { UpdateResearcherDto } from './dto/update-researcher.dto';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class ResearchersService {

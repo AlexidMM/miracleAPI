@@ -1,8 +1,8 @@
-DROP TABLE IF EXISTS questions CASCADE;
-DROP TABLE IF EXISTS favorites CASCADE;
-DROP TABLE IF EXISTS applications CASCADE;
 DROP TABLE IF EXISTS notifications CASCADE;
 DROP TABLE IF EXISTS publications CASCADE;
+DROP TABLE IF EXISTS laboratories CASCADE;
+DROP TABLE IF EXISTS favorites CASCADE;
+DROP TABLE IF EXISTS applications CASCADE;
 DROP TABLE IF EXISTS institution_disciplines CASCADE;
 DROP TABLE IF EXISTS researcher_disciplines CASCADE;
 DROP TABLE IF EXISTS disciplines CASCADE;
@@ -44,8 +44,24 @@ CREATE TABLE researchers (
     first_name VARCHAR(100) NOT NULL,
     last_name_p VARCHAR(100) NOT NULL,
     last_name_m VARCHAR(100),
-    affiliation_id INTEGER REFERENCES institutions(id), -- Optional
+    affiliation_id INTEGER REFERENCES institutions(id), -- Opcional (si es independiente)
     user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- NUEVA TABLA: Laboratorios / Sedes Fijas (para instituciones o investigadores independientes)
+CREATE TABLE laboratories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL, -- Ej: "Laboratorio de Videojuegos"
+    address TEXT NOT NULL,
+    latitude DECIMAL(10, 8) NOT NULL,  -- Latitud GPS fija del laboratorio
+    longitude DECIMAL(11, 8) NOT NULL, -- Longitud GPS fija del laboratorio
+    institution_id INTEGER REFERENCES institutions(id) ON DELETE CASCADE,
+    researcher_id INTEGER REFERENCES researchers(id) ON DELETE CASCADE,
+    -- Restricción: O pertenece a una institución O pertenece a un investigador independiente (nunca ambos ni ninguno)
+    CONSTRAINT chk_lab_owner CHECK (
+        (institution_id IS NOT NULL AND researcher_id IS NULL) OR
+        (institution_id IS NULL AND researcher_id IS NOT NULL)
+    )
 );
 
 CREATE TABLE disciplines (
@@ -72,6 +88,8 @@ CREATE TABLE publications (
     description TEXT NOT NULL,
     type VARCHAR(50), -- scholarship, internship, project
     author_id INTEGER NOT NULL REFERENCES users(id),
+    institution_id INTEGER REFERENCES institutions(id) ON DELETE SET NULL, -- Institución a la que pertenece la vacante
+    laboratory_id INTEGER REFERENCES laboratories(id) ON DELETE SET NULL, -- Sede física donde se realiza la vacante
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     status BOOLEAN DEFAULT TRUE
 );

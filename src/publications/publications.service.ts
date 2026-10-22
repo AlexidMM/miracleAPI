@@ -6,6 +6,7 @@ import { CreatePublicationDto } from './dto/create-publication.dto';
 import { UpdatePublicationDto } from './dto/update-publication.dto';
 import { User } from '../users/entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { Laboratory } from '../laboratories/entities/laboratory.entity';
 
 @Injectable()
 export class PublicationsService {
@@ -16,11 +17,13 @@ export class PublicationsService {
   ) {}
 
   async create(createPublicationDto: CreatePublicationDto) {
-    const { authorId, ...publicationData } = createPublicationDto;
+    const { authorId, laboratoryId, ...publicationData } = createPublicationDto; 
     const publication = this.publicationsRepository.create({
       ...publicationData,
       author: { id: authorId } as User,
+      ...(laboratoryId ? { laboratory: { id: laboratoryId } as Laboratory } : {}),
     });
+    
     const savedPublication = await this.publicationsRepository.save(publication);
 
     if (savedPublication.status !== false) {
@@ -40,6 +43,7 @@ export class PublicationsService {
       .leftJoinAndSelect('author.researcher', 'researcher')
       .leftJoinAndSelect('researcher.affiliation', 'affiliation')
       .leftJoinAndSelect('researcher.disciplines', 'discipline')
+      .leftJoinAndSelect('publication.laboratory', 'laboratory') // <-- Traer datos del laboratorio (GPS)
       .orderBy('publication.id', 'DESC');
 
     if (disciplineId) {
@@ -53,7 +57,8 @@ export class PublicationsService {
   async findOne(id: number) {
     const publication = await this.publicationsRepository.findOne({
       where: { id },
-      relations: ['author', 'author.researcher', 'author.researcher.affiliation', 'author.researcher.disciplines'],
+      // <-- Agregamos 'laboratory' a las relaciones
+      relations: ['author', 'author.researcher', 'author.researcher.affiliation', 'author.researcher.disciplines', 'laboratory'], 
     });
     if (!publication) {
       throw new NotFoundException(`Publicación con ID ${id} no encontrada`);
@@ -63,7 +68,8 @@ export class PublicationsService {
 
   async update(id: number, updatePublicationDto: UpdatePublicationDto) {
     const publication = await this.findOne(id);
-    const { authorId, ...publicationData } = updatePublicationDto as UpdatePublicationDto & { authorId?: number };
+    // Extrar laboratoryId
+    const { authorId, laboratoryId, ...publicationData } = updatePublicationDto as any;
 
     if (publicationData.status !== undefined && publicationData.status !== publication.status) {
       await this.notificationsService.createPublicationStatusNotification(
@@ -76,6 +82,7 @@ export class PublicationsService {
     await this.publicationsRepository.update(id, {
       ...publicationData,
       ...(authorId ? { author: { id: authorId } as User } : {}),
+      ...(laboratoryId ? { laboratory: { id: laboratoryId } as Laboratory } : {}),
     });
     return this.findOne(id);
   }
@@ -88,7 +95,7 @@ export class PublicationsService {
   async findByAuthor(authorId: number) {
     return this.publicationsRepository.find({
       where: { author: { id: authorId } },
-      relations: ['author'],
+      relations: ['author', 'laboratory'],
       order: { id: 'DESC' },
     });
   }

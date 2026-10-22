@@ -1,7 +1,8 @@
 export class CreatePublicationDto {
-	title: string;
-	description: string;
+	title!: string;
+	description!: string;
 	type?: string;
-	authorId: number;
+	authorId!: number;
+	laboratoryId?: number;
 	status?: boolean;
 }
