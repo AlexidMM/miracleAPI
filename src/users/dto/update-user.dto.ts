@@ -1,4 +1,5 @@
-import { PartialType } from '@nestjs/mapped-types';
+import { OmitType, PartialType } from '@nestjs/mapped-types';
 import { CreateUserDto } from './create-user.dto';
 
-export class UpdateUserDto extends PartialType(CreateUserDto) {}
+// El rol no se cambia por API (evita que alguien se vuelva admin)
+export class UpdateUserDto extends PartialType(OmitType(CreateUserDto, ['role'] as const)) {}

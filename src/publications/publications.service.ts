@@ -7,6 +7,8 @@ import { UpdatePublicationDto } from './dto/update-publication.dto';
 import { User } from '../users/entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Laboratory } from '../laboratories/entities/laboratory.entity';
+interface AuthUser { userId: number; role: string }
+
 
 @Injectable()
 export class PublicationsService {
@@ -16,25 +18,24 @@ export class PublicationsService {
     private readonly notificationsService: NotificationsService,
   ) {}
 
-  async create(createPublicationDto: CreatePublicationDto) {
-    const { authorId, laboratoryId, ...publicationData } = createPublicationDto; 
+  private assertCanModify(publication: Publication, user: AuthUser) {
+    if (user.role !== 'admin' && publication.author.id !== user.userId) {
+      throw new ForbiddenException('No puedes modificar publicaciones de otro autor');
+    }
+  }
+
+  async create(dto: CreatePublicationDto, authorId: number) {
+    const { laboratoryId, ...publicationData } = dto;
     const publication = this.publicationsRepository.create({
       ...publicationData,
       author: { id: authorId } as User,
       ...(laboratoryId ? { laboratory: { id: laboratoryId } as Laboratory } : {}),
     });
-    
-    const savedPublication = await this.publicationsRepository.save(publication);
-
-    if (savedPublication.status !== false) {
-      await this.notificationsService.createPublicationStatusNotification(
-        authorId,
-        savedPublication,
-        true,
-      );
+    const saved = await this.publicationsRepository.save(publication);
+    if (saved.status !== false) {
+      await this.notificationsService.createPublicationStatusNotification(authorId, saved, true);
     }
-
-    return savedPublication;
+    return saved;
   }
 
   async findAll(disciplineId?: number) {
@@ -66,29 +67,52 @@ export class PublicationsService {
     return publication;
   }
 
-  async update(id: number, updatePublicationDto: UpdatePublicationDto) {
+  async findNearby(lat: number, lng: number, radiusKm = 10) {
+    const distance = `(6371 * acos(LEAST(1,
+      cos(radians(:lat)) * cos(radians(laboratory.latitude)) * cos(radians(laboratory.longitude) - radians(:lng))
+      + sin(radians(:lat)) * sin(radians(laboratory.latitude)))))`;
+
+    const { entities, raw } = await this.publicationsRepository
+      .createQueryBuilder('publication')
+      .innerJoinAndSelect('publication.laboratory', 'laboratory')
+      .leftJoin('publication.author', 'author')
+      .leftJoin('author.researcher', 'researcher')
+      .addSelect(['author.id', 'researcher.id', 'researcher.firstName', 'researcher.lastNameP', 'researcher.lastNameM'])
+      .addSelect(distance, 'distance')
+      .where('publication.status = true')
+      .andWhere(`${distance} <= :radius`)
+      .setParameters({ lat, lng, radius: radiusKm })
+      .orderBy('distance', 'ASC')
+      .getRawAndEntities();
+
+    const distances = new Map<number, number>(raw.map((r) => [r.publication_id, parseFloat(r.distance)]));
+    return entities.map((p) => ({
+      ...p,
+      distanceKm: Math.round((distances.get(p.id) ?? 0) * 10) / 10,
+    }));
+  }
+
+  async update(id: number, dto: UpdatePublicationDto, user: AuthUser) {
     const publication = await this.findOne(id);
-    // Extrar laboratoryId
-    const { authorId, laboratoryId, ...publicationData } = updatePublicationDto as any;
+    this.assertCanModify(publication, user);
+    const { laboratoryId, ...publicationData } = dto;
 
     if (publicationData.status !== undefined && publicationData.status !== publication.status) {
       await this.notificationsService.createPublicationStatusNotification(
-        publication.author.id,
-        publication,
-        publicationData.status,
+        publication.author.id, publication, publicationData.status,
       );
     }
 
     await this.publicationsRepository.update(id, {
       ...publicationData,
-      ...(authorId ? { author: { id: authorId } as User } : {}),
       ...(laboratoryId ? { laboratory: { id: laboratoryId } as Laboratory } : {}),
     });
     return this.findOne(id);
   }
 
-  async remove(id: number) {
+  async remove(id: number, user: AuthUser) {
     const publication = await this.findOne(id);
+    this.assertCanModify(publication, user);
     return this.publicationsRepository.remove(publication);
   }
 

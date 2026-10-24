@@ -1,3 +1,5 @@
+import { IsBoolean } from 'class-validator';
+
 export class UpdatePublicationStatusDto {
-  status!: boolean;
+  @IsBoolean() status!: boolean;
 }

@@ -3,6 +3,11 @@ import { Institution } from '../../institutions/entities/institution.entity';
 import { Researcher } from '../../researchers/entities/researcher.entity';
 import { Publication } from '../../publications/entities/publication.entity';
 
+const decimalToNumber = {
+  to: (value?: number) => value,
+  from: (value?: string | null) => (value == null ? value : parseFloat(value)),
+};
+
 @Entity('laboratories')
 export class Laboratory {
   @PrimaryGeneratedColumn()
@@ -14,10 +19,10 @@ export class Laboratory {
   @Column('text')
   address!: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 8 })
+  @Column({ type: 'decimal', precision: 10, scale: 8, transformer: decimalToNumber })
   latitude!: number;
 
-  @Column({ type: 'decimal', precision: 11, scale: 8 })
+  @Column({ type: 'decimal', precision: 11, scale: 8, transformer: decimalToNumber })
   longitude!: number;
 
   @ManyToOne(() => Institution, { onDelete: 'CASCADE', nullable: true })

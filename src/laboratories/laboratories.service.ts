@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Laboratory } from './entities/laboratory.entity';
@@ -12,12 +12,14 @@ export class LaboratoriesService {
     private readonly laboratoriesRepository: Repository<Laboratory>,
   ) {}
 
-  async create(createLaboratoryDto: CreateLaboratoryDto) {
-    const { institutionId, researcherId, ...labData } = createLaboratoryDto;
+  async create(dto: CreateLaboratoryDto) {
+    const { institutionId, researcherId, ...labData } = dto;
+    if (!!institutionId === !!researcherId) {
+      throw new BadRequestException('Indica institutionId o researcherId (solo uno)');
+    }
     const laboratory = this.laboratoriesRepository.create({
       ...labData,
-      ...(institutionId ? { institution: { id: institutionId } as any } : {}),
-      ...(researcherId ? { researcher: { id: researcherId } as any } : {}),
+      ...(institutionId ? { institution: { id: institutionId } } : { researcher: { id: researcherId } }),
     });
     return await this.laboratoriesRepository.save(laboratory);
   }
@@ -39,15 +41,18 @@ export class LaboratoriesService {
     return laboratory;
   }
 
-  async update(id: number, updateLaboratoryDto: UpdateLaboratoryDto) {
-    const laboratory = await this.findOne(id);
-    const { institutionId, researcherId, ...labData } = updateLaboratoryDto;
-
-    await this.laboratoriesRepository.update(id, {
+  async update(id: number, dto: UpdateLaboratoryDto) {
+    await this.findOne(id);
+    const { institutionId, researcherId, ...labData } = dto;
+    if (institutionId && researcherId) {
+      throw new BadRequestException('Indica institutionId o researcherId (solo uno)');
+    }
+    const values: any = {
       ...labData,
-      ...(institutionId ? { institution: { id: institutionId } as any } : {}),
-      ...(researcherId ? { researcher: { id: researcherId } as any } : {}),
-    });
+      ...(institutionId ? { institution: { id: institutionId }, researcher: null } : {}),
+      ...(researcherId ? { researcher: { id: researcherId }, institution: null } : {}),
+    };
+    if (Object.keys(values).length) await this.laboratoriesRepository.update(id, values);
     return this.findOne(id);
   }
 

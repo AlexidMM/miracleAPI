@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -33,8 +34,8 @@ export class PublicationsController {
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @SetMetadata('roles', ['researcher'])
-  create(@Body() createPublicationDto: CreatePublicationDto) {
-    return this.publicationsService.create(createPublicationDto);
+  create(@Body() dto: CreatePublicationDto, @Req() req: AuthenticatedRequest) {
+    return this.publicationsService.create(dto, req.user.userId);
   }
 
   @Get()
@@ -54,6 +55,21 @@ export class PublicationsController {
   @SetMetadata('roles', ['researcher'])
   getMyStats(@Req() req: AuthenticatedRequest) {
     return this.publicationsService.getStatsByAuthor(req.user.userId);
+  }
+
+  @Get('nearby')
+  findNearby(@Query('lat') lat: string, @Query('lng') lng: string, @Query('radius') radius?: string) {
+    const latitude = parseFloat(lat);
+    const longitude = parseFloat(lng);
+    const radiusKm = radius ? parseFloat(radius) : 10;
+    if (
+      Number.isNaN(latitude) || Number.isNaN(longitude) ||
+      Math.abs(latitude) > 90 || Math.abs(longitude) > 180 ||
+      Number.isNaN(radiusKm) || radiusKm <= 0
+    ) {
+      throw new BadRequestException('lat, lng o radius inválidos');
+    }
+    return this.publicationsService.findNearby(latitude, longitude, Math.min(radiusKm, 100));
   }
 
   @Get(':id')
@@ -77,12 +93,16 @@ export class PublicationsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePublicationDto: UpdatePublicationDto) {
-    return this.publicationsService.update(+id, updatePublicationDto);
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @SetMetadata('roles', ['researcher'])
+  update(@Param('id') id: string, @Body() dto: UpdatePublicationDto, @Req() req: AuthenticatedRequest) {
+    return this.publicationsService.update(+id, dto, req.user);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.publicationsService.remove(+id);
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @SetMetadata('roles', ['researcher'])
+  remove(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+    return this.publicationsService.remove(+id, req.user);
   }
 }

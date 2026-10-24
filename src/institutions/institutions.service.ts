@@ -27,14 +27,14 @@ export class InstitutionsService {
 
   async findAll() {
     return await this.institutionsRepository.find({
-      relations: ['students', 'researchers', 'disciplines'],
+      relations: ['disciplines'],
     });
   }
 
   async findOne(id: number) {
     const institution = await this.institutionsRepository.findOne({
       where: { id },
-      relations: ['students', 'researchers', 'disciplines'],
+      relations: ['disciplines'],
     });
     if (!institution) {
       throw new NotFoundException(`Institución con ID ${id} no encontrada`);

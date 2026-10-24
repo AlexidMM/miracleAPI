@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -14,16 +14,19 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto) {
+    if (await this.findByEmail(createUserDto.email)) {
+      throw new ConflictException('El correo electrónico ya está registrado');
+    }
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    const newUser = this.userRepository.create({
-      ...createUserDto,
-      password: hashedPassword,
-    });
-    return this.userRepository.save(newUser);
+    const newUser = this.userRepository.create({ ...createUserDto, password: hashedPassword });
+    const { password: _, ...safeUser } = await this.userRepository.save(newUser);
+    return safeUser;
   }
 
   findAll() {
-    return this.userRepository.find({ relations: ['student', 'student.institution', 'researcher', 'researcher.affiliation', 'institution'] });
+    return this.userRepository.find({
+      relations: ['student', 'student.institution', 'researcher', 'researcher.affiliation', 'institution'],
+    });
   }
 
   async findOne(id: number) {
@@ -35,21 +38,33 @@ export class UsersService {
     return user;
   }
 
-  async findByEmail(email: string) {
+  findByEmail(email: string) {
     return this.userRepository.findOne({ where: { email } });
+  }
+
+  // Único lugar donde se pide el hash (solo para login)
+  findByEmailForAuth(email: string) {
+    return this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email })
+      .getOne();
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
     const user = await this.findOne(id);
+    const changes = { ...updateUserDto };
     if (updateUserDto.password) {
-      updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
+      changes.password = await bcrypt.hash(updateUserDto.password, 10);
     }
-    const updatedUser = this.userRepository.merge(user, updateUserDto);
-    return this.userRepository.save(updatedUser);
+    const saved = await this.userRepository.save(this.userRepository.merge(user, changes));
+    const { password: _, ...safeUser } = saved;
+    return safeUser;
   }
 
   async remove(id: number) {
     const user = await this.findOne(id);
-    return this.userRepository.remove(user);
+    await this.userRepository.remove(user);
+    return { message: 'Usuario eliminado' };
   }
 }

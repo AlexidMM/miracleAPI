@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Delete, UseGuards, SetMetadata } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Delete, UseGuards, SetMetadata, Req } from '@nestjs/common';
 import { ResearchersService } from './researchers.service';
 import { CreateResearcherDto } from './dto/create-researcher.dto';
 import { UpdateResearcherDto } from './dto/update-researcher.dto';
@@ -28,8 +28,8 @@ export class ResearchersController {
 
   @Patch(':id')
   @UseGuards(AuthGuard('jwt'))
-  update(@Param('id') id: string, @Body() updateResearcherDto: UpdateResearcherDto) {
-    return this.researchersService.update(+id, updateResearcherDto);
+  update(@Param('id') id: string, @Body() updateResearcherDto: UpdateResearcherDto, @Req() req: any) {
+    return this.researchersService.update(+id, updateResearcherDto, req.user);
   }
 
   @Delete(':id')
@@ -41,13 +41,13 @@ export class ResearchersController {
 
   @Post(':id/disciplines/:disciplineId')
   @UseGuards(AuthGuard('jwt'))
-  addDiscipline(@Param('id') id: string, @Param('disciplineId') disciplineId: string) {
-    return this.researchersService.addDiscipline(+id, +disciplineId);
+  addDiscipline(@Param('id') id: string, @Param('disciplineId') disciplineId: string, @Req() req: any) {
+    return this.researchersService.addDiscipline(+id, +disciplineId, req.user);
   }
 
   @Delete(':id/disciplines/:disciplineId')
   @UseGuards(AuthGuard('jwt'))
-  removeDiscipline(@Param('id') id: string, @Param('disciplineId') disciplineId: string) {
-    return this.researchersService.removeDiscipline(+id, +disciplineId);
+  removeDiscipline(@Param('id') id: string, @Param('disciplineId') disciplineId: string, @Req() req: any) {
+    return this.researchersService.removeDiscipline(+id, +disciplineId, req.user);
   }
 }

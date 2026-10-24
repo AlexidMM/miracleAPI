@@ -1,12 +1,10 @@
-// src/auth/dto/register-student.dto.ts
-export class RegisterStudentDto {
-  // Datos de cuenta (User)
-  email!: string;
-  password!: string;
+import { IsEmail, IsInt, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
-  // Datos de perfil (Student)
-  firstName!: string;
-  lastNameP!: string;
-  lastNameM?: string;
-  institutionId!: number;
+export class RegisterStudentDto {
+  @IsEmail() email!: string;
+  @IsString() @MinLength(6) password!: string;
+  @IsString() @IsNotEmpty() firstName!: string;
+  @IsString() @IsNotEmpty() lastNameP!: string;
+  @IsOptional() @IsString() lastNameM?: string;
+  @IsInt() institutionId!: number;
 }

@@ -1,9 +1,10 @@
-export class CreateResearcherDto {
-  email!: string;
-  password!: string;
+import { IsEmail, IsInt, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
-  firstName!: string;
-  lastNameP!: string;
-  lastNameM?: string;
-  affiliationId?: number;
+export class CreateResearcherDto {
+  @IsEmail() email!: string;
+  @IsString() @MinLength(6) password!: string;
+  @IsString() @IsNotEmpty() firstName!: string;
+  @IsString() @IsNotEmpty() lastNameP!: string;
+  @IsOptional() @IsString() lastNameM?: string;
+  @IsOptional() @IsInt() affiliationId?: number;
 }

@@ -1,11 +1,9 @@
+import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+
 export class CreateStudentDto {
-  firstName!: string;
-
-  lastNameP!: string;
-
-  lastNameM?: string;
-
-  institutionId!: number;
-
-  userId?: number;
+  @IsString() @IsNotEmpty() firstName!: string;
+  @IsString() @IsNotEmpty() lastNameP!: string;
+  @IsOptional() @IsString() lastNameM?: string;
+  @IsInt() institutionId!: number;
+  @IsOptional() @IsInt() userId?: number;
 }

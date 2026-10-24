@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { User, UserRole } from '../users/entities/user.entity';
@@ -17,6 +17,16 @@ export class ResearchersService {
     private readonly disciplinesRepository: Repository<Discipline>,
     private readonly dataSource: DataSource,
   ) {}
+
+  private validateOwnership(researcher: Researcher, userToken: any) {
+    if (userToken.role === 'admin') return;
+    
+    const tokenId = userToken.id || userToken.sub; 
+    
+    if (researcher.user?.id !== tokenId) {
+      throw new ForbiddenException('No tienes permisos para modificar este perfil');
+    }
+  }
 
   async create(dto: CreateResearcherDto) {
     const queryRunner = this.dataSource.createQueryRunner();
@@ -77,8 +87,11 @@ export class ResearchersService {
     return researcher;
   }
 
-  async update(id: number, updateResearcherDto: UpdateResearcherDto) {
+  async update(id: number, updateResearcherDto: UpdateResearcherDto, userToken: any) {
     const researcher = await this.findOne(id);
+    
+    this.validateOwnership(researcher, userToken);
+    
     const updatedResearcher = this.researchersRepository.merge(researcher, updateResearcherDto);
     return await this.researchersRepository.save(updatedResearcher);
   }
@@ -88,15 +101,10 @@ export class ResearchersService {
     return this.researchersRepository.remove(researcher);
   }
 
-  async addDiscipline(researcherId: number, disciplineId: number) {
-    const researcher = await this.researchersRepository.findOne({
-      where: { id: researcherId },
-      relations: ['disciplines'],
-    });
+  async addDiscipline(researcherId: number, disciplineId: number, userToken: any) {
+    const researcher = await this.findOne(researcherId);
 
-    if (!researcher) {
-      throw new NotFoundException(`Investigador con ID ${researcherId} no encontrado`);
-    }
+    this.validateOwnership(researcher, userToken);
 
     const discipline = await this.disciplinesRepository.findOne({ where: { id: disciplineId } });
 
@@ -112,15 +120,10 @@ export class ResearchersService {
     return await this.researchersRepository.save(researcher);
   }
 
-  async removeDiscipline(researcherId: number, disciplineId: number) {
-    const researcher = await this.researchersRepository.findOne({
-      where: { id: researcherId },
-      relations: ['disciplines'],
-    });
+  async removeDiscipline(researcherId: number, disciplineId: number, userToken: any) {
+    const researcher = await this.findOne(researcherId);
 
-    if (!researcher) {
-      throw new NotFoundException(`Investigador con ID ${researcherId} no encontrado`);
-    }
+    this.validateOwnership(researcher, userToken);
 
     const discipline = await this.disciplinesRepository.findOne({ where: { id: disciplineId } });
 

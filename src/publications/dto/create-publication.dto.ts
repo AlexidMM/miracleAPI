@@ -1,8 +1,9 @@
+import { IsBoolean, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+
 export class CreatePublicationDto {
-	title!: string;
-	description!: string;
-	type?: string;
-	authorId!: number;
-	laboratoryId?: number;
-	status?: boolean;
+  @IsString() @IsNotEmpty() @MaxLength(255) title!: string;
+  @IsString() @IsNotEmpty() description!: string;
+  @IsOptional() @IsIn(['scholarship', 'internship', 'project']) type?: string;
+  @IsOptional() @IsInt() laboratoryId?: number;
+  @IsOptional() @IsBoolean() status?: boolean;
 }

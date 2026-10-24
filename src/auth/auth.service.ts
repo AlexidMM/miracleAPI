@@ -17,10 +17,10 @@ export class AuthService {
 	) {}
 
 	async validateUser(email: string, password: string) {
-		const user = await this.usersService.findByEmail(email);
-		if (!user) {
-			throw new UnauthorizedException('Credenciales inválidas');
-		}
+		const user = await this.usersService.findByEmailForAuth(email);
+    if (!user || !user.status) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
 
 		const passwordMatches = await bcrypt.compare(password, user.password);
 		if (!passwordMatches) {
