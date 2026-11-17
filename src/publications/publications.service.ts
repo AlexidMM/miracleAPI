@@ -76,13 +76,15 @@ export class PublicationsService {
       .createQueryBuilder('publication')
       .innerJoinAndSelect('publication.laboratory', 'laboratory')
       .leftJoin('publication.author', 'author')
+      .leftJoin('publication.institution', 'institution')
       .leftJoin('author.researcher', 'researcher')
-      .addSelect(['author.id', 'researcher.id', 'researcher.firstName', 'researcher.lastNameP', 'researcher.lastNameM'])
+      .addSelect(['author.id', 'author.email', 'institution.id', 'institution.contactInfo', 'researcher.id', 'researcher.firstName', 'researcher.lastNameP', 'researcher.lastNameM'])
       .addSelect(distance, 'distance')
       .where('publication.status = true')
       .andWhere(`${distance} <= :radius`)
       .setParameters({ lat, lng, radius: radiusKm })
       .orderBy('distance', 'ASC')
+      .limit(15)
       .getRawAndEntities();
 
     const distances = new Map<number, number>(raw.map((r) => [r.publication_id, parseFloat(r.distance)]));

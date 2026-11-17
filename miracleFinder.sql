@@ -110,3 +110,23 @@ CREATE TABLE contacts (
     message TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- =========================================================
+-- RESTRICCIONES CONTRA CLONACIÓN POR DOBLE CLIC (ANTI-SPAM)
+-- =========================================================
+
+-- 1. Un autor no puede publicar dos veces exactamente la misma vacante/proyecto
+ALTER TABLE publications ADD CONSTRAINT uk_publications_title_author UNIQUE (title, author_id);
+
+-- 2. Evitar instituciones duplicadas por nombre a nivel global
+ALTER TABLE institutions ADD CONSTRAINT uk_institutions_name UNIQUE (name);
+
+-- 3. Una institución no puede registrar dos veces un laboratorio con el mismo nombre
+CREATE UNIQUE INDEX uk_laboratories_institution_name
+ON laboratories (name, institution_id)
+WHERE institution_id IS NOT NULL;
+
+-- 4. Un investigador no puede registrar dos veces un laboratorio con el mismo nombre
+CREATE UNIQUE INDEX uk_laboratories_researcher_name
+ON laboratories (name, researcher_id)
+WHERE researcher_id IS NOT NULL;
