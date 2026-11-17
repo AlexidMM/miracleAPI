@@ -7,8 +7,11 @@ import { UpdatePublicationDto } from './dto/update-publication.dto';
 import { User } from '../users/entities/user.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { Laboratory } from '../laboratories/entities/laboratory.entity';
-interface AuthUser { userId: number; role: string }
 
+interface AuthUser {
+  userId: number;
+  role: string;
+}
 
 @Injectable()
 export class PublicationsService {
@@ -39,12 +42,13 @@ export class PublicationsService {
   }
 
   async findAll(disciplineId?: number) {
-    const query = this.publicationsRepository.createQueryBuilder('publication')
+    const query = this.publicationsRepository
+      .createQueryBuilder('publication')
       .leftJoinAndSelect('publication.author', 'author')
       .leftJoinAndSelect('author.researcher', 'researcher')
       .leftJoinAndSelect('researcher.affiliation', 'affiliation')
       .leftJoinAndSelect('researcher.disciplines', 'discipline')
-      .leftJoinAndSelect('publication.laboratory', 'laboratory') // <-- Traer datos del laboratorio (GPS)
+      .leftJoinAndSelect('publication.laboratory', 'laboratory')
       .orderBy('publication.id', 'DESC');
 
     if (disciplineId) {
@@ -58,8 +62,14 @@ export class PublicationsService {
   async findOne(id: number) {
     const publication = await this.publicationsRepository.findOne({
       where: { id },
-      // <-- Agregamos 'laboratory' a las relaciones
-      relations: ['author', 'author.researcher', 'author.researcher.affiliation', 'author.researcher.disciplines', 'laboratory'], 
+      relations: [
+        'author',
+        'author.researcher',
+        'author.researcher.affiliation',
+        'author.researcher.disciplines',
+        'laboratory',
+        'laboratory.institution',
+      ],
     });
     if (!publication) {
       throw new NotFoundException(`Publicación con ID ${id} no encontrada`);
@@ -75,10 +85,18 @@ export class PublicationsService {
     const { entities, raw } = await this.publicationsRepository
       .createQueryBuilder('publication')
       .innerJoinAndSelect('publication.laboratory', 'laboratory')
+      .leftJoinAndSelect('laboratory.institution', 'labInstitution')
       .leftJoin('publication.author', 'author')
-      .leftJoin('publication.institution', 'institution')
       .leftJoin('author.researcher', 'researcher')
-      .addSelect(['author.id', 'author.email', 'institution.id', 'institution.contactInfo', 'researcher.id', 'researcher.firstName', 'researcher.lastNameP', 'researcher.lastNameM'])
+      .leftJoinAndSelect('researcher.affiliation', 'affiliation')
+      .addSelect([
+        'author.id',
+        'author.email',
+        'researcher.id',
+        'researcher.firstName',
+        'researcher.lastNameP',
+        'researcher.lastNameM',
+      ])
       .addSelect(distance, 'distance')
       .where('publication.status = true')
       .andWhere(`${distance} <= :radius`)
@@ -87,7 +105,9 @@ export class PublicationsService {
       .limit(15)
       .getRawAndEntities();
 
-    const distances = new Map<number, number>(raw.map((r) => [r.publication_id, parseFloat(r.distance)]));
+    const distances = new Map<number, number>(
+      raw.map((r) => [r.publication_id, parseFloat(r.distance)]),
+    );
     return entities.map((p) => ({
       ...p,
       distanceKm: Math.round((distances.get(p.id) ?? 0) * 10) / 10,
@@ -101,7 +121,9 @@ export class PublicationsService {
 
     if (publicationData.status !== undefined && publicationData.status !== publication.status) {
       await this.notificationsService.createPublicationStatusNotification(
-        publication.author.id, publication, publicationData.status,
+        publication.author.id,
+        publication,
+        publicationData.status,
       );
     }
 
